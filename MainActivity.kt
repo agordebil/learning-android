@@ -14,7 +14,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableDoubleState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,13 +39,14 @@ class MainActivity : ComponentActivity() {
                 var charslist = remember {
                     mutableStateListOf<Char>()
                 }
-                var result by remember{
-                    mutableStateOf(0)
+                var result = remember{
+                    mutableDoubleStateOf(0.0)
                 }
 
 
                     Column() {
                         Row() {
+                           // Text(text = result.toString(), fontSize = 30.sp, modifier= Modifier.padding(30.dp))
                             Text(text = charslist.joinToString(separator = ""), fontSize = 30.sp, modifier= Modifier.padding(30.dp))
                         } //display result
                         Row() {
@@ -69,7 +73,7 @@ class MainActivity : ComponentActivity() {
                             Column() {
                                 //fourth column, + - * /
                                 BackspaceButton(charslist,'<')
-                                CalcButton(charslist,'=') //this button will be different, it will execute the generated function
+                                EqualToButton(charslist,'=',result) //this button will be different, it will execute the generated function
                                 CalcButton(charslist,'*')
                                 CalcButton(charslist,'/')
                             }
@@ -83,14 +87,41 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun EqualToButton(chars:MutableList<Char>,num:Char){
+fun EqualToButton(chars:MutableList<Char>,num:Char, equalsDeez:MutableState<Double>){
     Button(onClick = {
         var txt = chars.toList()
-        var sym = arrayOf('+','-','*','/','=','<')
+        val sym = arrayOf('+','-','*','/','=','<')
         //reduce array into symbols, find its length, its length +1 is how many numbers you
         //have. hashmap symbols into array and push numbers into a list as string
         //make them int with toInt and execute the operation.
         //the result will be displayed as a secondary row - under the current charslist
+
+        println(equalsDeez)
+        var mapSym = mutableMapOf<Int, Char>()
+        var txtEdited = txt.toMutableList()
+        println(txtEdited.toString())
+        for(i in txt.indices){
+            if(sym.indexOf(txt[i])!=-1){
+                mapSym[i] = txt[i]
+                txtEdited[i] = '_'
+            }
+        }
+        var txtStr =  txtEdited.joinToString(separator = "")
+        var unres =  txtStr.split('_')
+       // var variableCount:Int = mapSym.size+1
+        equalsDeez.value = unres[0].toDouble()
+        var index = 1
+        for(value in mapSym.values){
+            when(value){
+                '-' -> equalsDeez.value = equalsDeez.value - unres[index].toDouble()
+                '+' -> equalsDeez.value = equalsDeez.value + unres[index].toDouble()
+                '*' -> equalsDeez.value = equalsDeez.value * unres[index].toDouble()
+                '/' -> equalsDeez.value = equalsDeez.value / unres[index].toDouble()
+            }
+            index++
+        }
+        println(equalsDeez)
+
     }
     ){
         Text(text = "$num", color = Color.White, fontSize = 16.sp)
@@ -103,8 +134,9 @@ fun EqualToButton(chars:MutableList<Char>,num:Char){
 @Composable
 fun BackspaceButton(chars:MutableList<Char>,num:Char){
     Button(onClick = {
-        chars.removeAt(chars.lastIndex)
-        println(chars.joinToString(separator = ""))
+        if(chars.size >0){
+            chars.removeAt(chars.lastIndex)
+        }
     }
 ){
     Text(text = "$num", color = Color.White, fontSize = 16.sp)
@@ -116,9 +148,13 @@ fun BackspaceButton(chars:MutableList<Char>,num:Char){
 fun CalcButton(chars:MutableList<Char>,num:Char){
     Button(onClick = {
         var sym = arrayOf('+','-','*','/','=','<')
-        if(chars.size == 0 && sym.indexOf(num)==-1) {
-            chars.add(num)
+        if(chars.size == 0 && (num == '0' || sym.indexOf(num)!=-1) ) {
+            return@Button
         }
+        if((chars.size != 0 && sym.indexOf(chars.last()) != -1) && (num == '0' || sym.indexOf(num)!=-1)){
+            return@Button
+        }
+        chars.add(num)
     }){
         Text(text = "$num", color = Color.White, fontSize = 16.sp)
     }

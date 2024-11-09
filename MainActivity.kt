@@ -107,20 +107,72 @@ fun EqualToButton(chars:MutableList<Char>,num:Char, equalsDeez:MutableState<Doub
             }
         }
         var txtStr =  txtEdited.joinToString(separator = "")
-        var unres =  txtStr.split('_')
+        var unres =  txtStr.split('_') //these are the numbers
        // var variableCount:Int = mapSym.size+1
-        equalsDeez.value = unres[0].toDouble()
-        var index = 1
-        for(value in mapSym.values){
-            when(value){
-                '-' -> equalsDeez.value = equalsDeez.value - unres[index].toDouble()
-                '+' -> equalsDeez.value = equalsDeez.value + unres[index].toDouble()
-                '*' -> equalsDeez.value = equalsDeez.value * unres[index].toDouble()
-                '/' -> equalsDeez.value = equalsDeez.value / unres[index].toDouble()
+
+        for(key in mapSym.keys){
+            if (mapSym[key] != '/' && mapSym[key] != '*'){
+                equalsDeez.value = unres[0].toDouble()
+                var index = 1
+                for(value in mapSym.values){
+                    when(value){
+                        '-' -> equalsDeez.value = equalsDeez.value - unres[index].toDouble()
+                        '+' -> equalsDeez.value = equalsDeez.value + unres[index].toDouble()
+                //      '*' -> equalsDeez.value = equalsDeez.value * unres[index].toDouble()
+                //      '/' -> equalsDeez.value = equalsDeez.value / unres[index].toDouble()
+                    }
+                    index++
+                }
             }
-            index++
         }
-        println(equalsDeez)
+
+        //Check if we have consequent * or /
+        var conseq:Int = 0
+        var former: Char? = mapSym[mapSym.keys.elementAt(0)]
+        for(key in mapSym.keys){
+            if (mapSym[key] == '/' || mapSym[key] == '*'){
+                if(mapSym[key] == former){
+                    conseq++
+                }
+            }
+            former = mapSym[key]
+        }
+
+        //doesnt work
+        //non-conseq * & / included with operation prio
+        var newNumbers: MutableList<Int> = mutableListOf()
+//        var newDebug: MutableList<Int> = mutableListOf()
+
+        if (conseq ==1){ //this means we have * or / but not consequent
+            if(mapSym.values.size + 1 == unres.size){
+                for(i in mapSym.values.indices){
+                    if(mapSym.values.elementAt(i) == '*'){
+                        var temp:Int = unres[i].toInt() * unres[i+1].toInt()
+                        newNumbers.add(temp)
+                    }else if(mapSym.values.elementAt(i) == '/'){
+                        var temp:Int = unres[i].toInt() / unres[i+1].toInt()
+                        newNumbers.add(temp)
+                    }else{
+                        newNumbers.add(unres[i].toInt())
+                    }
+                }
+            }
+            if(newNumbers.size>0){
+                equalsDeez.value = newNumbers[0].toDouble()
+            }
+            var ind = 1
+            for (value in mapSym.values){
+                when(value){
+                    '-' -> equalsDeez.value = equalsDeez.value - newNumbers[ind].toDouble()
+                    '+' -> equalsDeez.value = equalsDeez.value + newNumbers[ind].toDouble()
+                }
+                ind++
+            }
+        }
+//    println(equalsDeez)
+        println(unres)
+        println(newNumbers.toString())
+        println(mapSym.values)
 
     }
     ){
